@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<!-- CSI-BRIEF v1.0 2026-09-17 -->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>Counting the Reviews — Customer Satisfaction Index (CSI)</title>
+<style>
+:root{
+  --orange-50:#FEF6EC; --orange-100:#FDE3C2; --orange-500:#EF8B22; --orange-700:#D96B10; --orange-900:#CC5500;
+  --navy-50:#EEF1F4; --navy-100:#CDD5DA; --navy-400:#507080; --navy-500:#27343D; --navy-700:#1A2329;
+  --blue-50:#EBF4FB; --blue-500:#0979C3; --blue-700:#065E9A; --blue-900:#023B63;
+  --grey-50:#F4F5F5; --grey-100:#E2E3E4; --grey-200:#C0C2C4; --grey-500:#53575A; --grey-700:#363839;
+  --success:#69995D; --error:#CC0100;
+  --radius-sm:6px; --radius-md:12px; --radius-lg:20px;
+  --shadow-md:0 4px 12px rgba(39,52,61,.10);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{font-size:18px;scroll-behavior:smooth}
+body{font-family:'Roboto',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;color:var(--grey-500);background:#fff;line-height:1.55;-webkit-font-smoothing:antialiased}
+.wrap{max-width:860px;margin:0 auto;padding:0 20px}
+h1,h2,h3,h4{color:var(--navy-500);font-weight:700}
+a{color:var(--blue-500);text-decoration:none} a:hover{text-decoration:underline}
+
+.reviewer-bar{position:sticky;top:0;z-index:50;background:var(--navy-500);color:#fff;padding:10px 0;box-shadow:var(--shadow-md)}
+.reviewer-bar .wrap{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.reviewer-bar .lbl{font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--navy-100)}
+.rev-chip{font-size:.72rem;font-weight:700;padding:5px 14px;border-radius:999px;border:1.5px solid var(--navy-400);background:transparent;color:#fff;cursor:pointer;font-family:inherit}
+.rev-chip.on{background:var(--orange-500);border-color:var(--orange-500);color:var(--navy-700)}
+#revStatus{font-size:.7rem;color:var(--orange-500);font-weight:700;margin-left:auto}
+
+.hero{background:var(--navy-500);color:#fff;padding:52px 0 44px}
+.hero .kicker{font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--orange-500);font-weight:700;margin-bottom:10px}
+.hero h1{color:#fff;font-size:2.1rem;line-height:1.15;margin-bottom:14px}
+.hero p{color:var(--navy-100);max-width:640px;font-size:.95rem;margin-bottom:10px}
+.hero .meta{margin-top:18px;font-size:.72rem;color:var(--navy-400)}
+.hero .meta b{color:var(--navy-100)}
+
+section{padding:44px 0}
+section:nth-of-type(even){background:var(--grey-50)}
+.sec-label{display:inline-block;background:var(--navy-500);color:#fff;font-size:.66rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;padding:4px 12px;border-radius:999px;margin-bottom:14px}
+h2{font-size:1.5rem;margin-bottom:16px}
+h3{font-size:1.05rem;margin:22px 0 8px}
+p{margin-bottom:12px;max-width:70ch}
+.lead{font-size:1.05rem;color:var(--grey-700)}
+ul,ol{margin:0 0 12px 22px} li{margin-bottom:7px;font-size:.88rem;max-width:68ch}
+
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:22px 0}
+@media(max-width:700px){.stats{grid-template-columns:repeat(2,1fr)}}
+.stat{background:var(--navy-500);border-radius:var(--radius-md);padding:16px 14px;text-align:center}
+.stat .n{font-size:1.7rem;font-weight:700;color:var(--orange-500);line-height:1.1}
+.stat .l{font-size:.66rem;color:var(--navy-100);margin-top:5px;line-height:1.35}
+
+.card{background:#fff;border:1px solid var(--grey-100);border-radius:var(--radius-md);padding:20px 22px;margin:14px 0;box-shadow:var(--shadow-md)}
+.card h4{font-size:.95rem;margin-bottom:8px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:700px){.grid2{grid-template-columns:1fr}}
+
+.mode{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:18px 0}
+@media(max-width:700px){.mode{grid-template-columns:1fr}}
+.mode .m{border-radius:var(--radius-md);padding:18px 20px}
+.mode .decided{background:var(--navy-500);color:#fff}
+.mode .decided h4{color:#fff}
+.mode .decided .tag{font-size:.62rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--orange-500);margin-bottom:6px}
+.mode .decided p{color:var(--navy-100);font-size:.85rem}
+.mode .open{background:var(--blue-50);border:1px solid #BBD9EF}
+.mode .open .tag{font-size:.62rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--blue-700);margin-bottom:6px}
+.mode .open p{font-size:.85rem}
+
+.bar-row{display:flex;align-items:center;gap:10px;margin:8px 0;font-size:.8rem}
+.bar-row .bl{width:230px;flex-shrink:0;text-align:right;color:var(--grey-700)}
+.bar-track{flex:1;background:var(--grey-100);border-radius:999px;height:24px;position:relative;overflow:hidden;display:flex}
+.seg{height:100%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:.65rem;font-weight:700}
+.seg.p{background:var(--success)} .seg.x{background:var(--navy-400)} .seg.d{background:var(--error)}
+@media(max-width:700px){.bar-row{flex-wrap:wrap}.bar-row .bl{width:100%;text-align:left}}
+.legend{font-size:.7rem;color:var(--grey-500);margin-top:8px}
+.legend b{display:inline-block;width:10px;height:10px;border-radius:2px;vertical-align:middle;margin:0 4px 0 12px}
+.legend b.p{background:var(--success)} .legend b.x{background:var(--navy-400)} .legend b.d{background:var(--error)}
+
+.tblwrap{overflow-x:auto;margin:16px 0}
+table{border-collapse:collapse;width:100%;font-size:.8rem;background:#fff;border-radius:var(--radius-sm);overflow:hidden}
+th{background:var(--navy-500);color:#fff;text-align:left;padding:9px 12px;font-size:.7rem;text-transform:uppercase;letter-spacing:.05em;white-space:nowrap}
+td{padding:8px 12px;border-bottom:1px solid var(--grey-100);white-space:nowrap;color:var(--grey-700)}
+tr.hl td{background:var(--orange-50)}
+tr.total td{background:var(--navy-50);font-weight:700;color:var(--navy-500)}
+td.up{color:var(--success);font-weight:700} td.down{color:var(--error);font-weight:700}
+td.num{text-align:right}
+
+.callout{background:var(--blue-50);border-radius:var(--radius-md);padding:18px 22px;margin:16px 0}
+.callout.warm{background:var(--orange-50)}
+.callout.dark{background:var(--navy-500)}
+.callout.dark h4,.callout.dark p{color:#fff}
+.callout.dark p{color:var(--navy-100)}
+.callout h4{margin-bottom:6px;font-size:.9rem}
+.callout p{font-size:.85rem;margin-bottom:8px}
+.callout p:last-child{margin-bottom:0}
+
+.rules{width:100%;border-collapse:collapse;font-size:.85rem;margin:16px 0}
+.rules td{padding:11px 14px;border-bottom:1px solid var(--grey-100);white-space:normal;vertical-align:top}
+.rules td:first-child{width:200px;font-weight:700;color:var(--navy-500)}
+@media(max-width:700px){.rules td:first-child{width:130px}}
+
+.limit{border-left:5px solid var(--orange-500);background:#fff;border-radius:0 var(--radius-md) var(--radius-md) 0;padding:14px 18px;margin:12px 0;box-shadow:var(--shadow-md)}
+.limit h4{font-size:.9rem;margin-bottom:5px}
+.limit p{font-size:.85rem;margin-bottom:0}
+
+.prop{background:#fff;border:1px solid var(--grey-100);border-radius:var(--radius-md);margin:14px 0;overflow:hidden;box-shadow:var(--shadow-md)}
+.prop .head{display:flex;align-items:baseline;gap:12px;padding:14px 20px;background:var(--navy-50)}
+.prop .num{font-size:1.1rem;font-weight:700;color:var(--orange-900);flex-shrink:0}
+.prop .head h4{font-size:.95rem;margin:0}
+.prop .body{padding:14px 20px}
+.prop .body p{font-size:.85rem}
+
+.ballot{border-top:1px dashed var(--grey-200);margin-top:12px;padding-top:12px}
+.ballot .btns{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.vote-btn{font-size:.74rem;font-weight:700;padding:6px 16px;border-radius:999px;border:1.5px solid var(--grey-200);background:#fff;color:var(--grey-700);cursor:pointer;font-family:inherit;transition:all .12s}
+.vote-btn:hover{border-color:var(--blue-500)}
+.vote-btn.agree.on{background:#E7F0E4;border-color:var(--success);color:#3E6B34}
+.vote-btn.disagree.on{background:#F9E2E2;border-color:var(--error);color:var(--error)}
+.vote-btn.discuss.on{background:var(--orange-100);border-color:var(--orange-700);color:var(--orange-900)}
+.ballot textarea{width:100%;margin-top:9px;font-family:inherit;font-size:.8rem;padding:9px 11px;border:1px solid var(--grey-200);border-radius:var(--radius-sm);resize:vertical;min-height:52px;color:var(--grey-700)}
+.ballot textarea:focus{outline:none;border-color:var(--blue-500)}
+
+.export{background:var(--navy-500);border-radius:var(--radius-md);padding:22px;margin:22px 0;text-align:center}
+.export h4{color:#fff;margin-bottom:8px}
+.export p{color:var(--navy-100);font-size:.85rem;max-width:none;margin-bottom:14px}
+#exportBtn{font-size:.85rem;font-weight:700;padding:11px 26px;border-radius:999px;border:none;background:var(--orange-500);color:var(--navy-700);cursor:pointer;font-family:inherit}
+#exportBtn:hover{background:var(--orange-700);color:#fff}
+#exportOut{display:none;width:100%;margin-top:14px;min-height:130px;font-family:ui-monospace,Menlo,monospace;font-size:.72rem;padding:11px;border-radius:var(--radius-sm);border:none;resize:vertical}
+
+.spec{background:#fff;border:1px solid var(--grey-100);border-radius:var(--radius-md);padding:20px 22px;margin:14px 0}
+.spec code{font-family:ui-monospace,Menlo,monospace;font-size:.78rem;background:var(--grey-50);padding:2px 6px;border-radius:4px;color:var(--navy-700)}
+.spec pre{background:var(--navy-700);color:#E6EDF3;padding:14px 16px;border-radius:var(--radius-sm);overflow-x:auto;font-size:.74rem;margin:10px 0;line-height:1.5}
+
+footer{background:var(--navy-700);color:var(--navy-100);padding:34px 0;font-size:.78rem}
+footer h4{color:#fff;font-size:.85rem;margin-bottom:8px}
+footer p{max-width:none;font-size:.78rem;margin-bottom:7px}
+footer a{color:var(--orange-500)}
+@media print{.reviewer-bar,.ballot,.export{display:none !important}}
+</style>
+</head>
+<body>
+
+<div class="reviewer-bar">
+  <div class="wrap">
+    <span class="lbl">You are:</span>
+    <span id="revChips"></span>
+    <span id="revStatus"></span>
+  </div>
+</div>
+
+<div class="hero">
+  <div class="wrap">
+    <div class="kicker">Decision Brief · Customer Satisfaction</div>
+    <h1>Counting the reviews</h1>
+    <p class="lead">Our Customer NPS only counts people who answer the GatherUp survey. It ignores every customer who leaves a Google or Yelp review instead — about a third of the people telling us how we did.</p>
+    <p>Starting Q3, we measure both as one number: the <b>Customer Satisfaction Index</b>. NPS stays on the scorecard as a reference.</p>
+    <div class="meta"><b>9/17/2026</b> · Cameron Brown, analysis by Albert · Successor to the <b>NPS Detractor Policy</b> ruling of 8/28 — nothing in it is reversed</div>
+  </div>
+</div>
+
+<section>
+<div class="wrap">
+  <div class="sec-label">The size of it</div>
+  <div class="stats">
+    <div class="stat"><div class="n">283</div><div class="l">customers this quarter whose feedback we never counted</div></div>
+    <div class="stat"><div class="n">+47%</div><div class="l">more responses behind every branch score</div></div>
+    <div class="stat"><div class="n">86.7&nbsp;→&nbsp;88.7</div><div class="l">company score, NPS vs CSI, Q3 to date</div></div>
+    <div class="stat"><div class="n">8</div><div class="l">branch-quarters that would have graded differently in Q1–Q2</div></div>
+  </div>
+
+  <h3>This is not a new idea</h3>
+  <p>The 8/28 NPS ruling already found the real problem: <b>response rate is the volatility lever</b> — N. Austin was converting 8.7% of requests while Houston converted 53.1%. That ruling left exactly one question open for the Q3 QGR packet: <b>our Green band is 3 points wide and the noise in the number is about ±7 points.</b></p>
+  <p>CSI is the answer to that question. It grows the sample instead of widening the band.</p>
+</div>
+</section>
+
+<section>
+<div class="wrap">
+  <div class="sec-label">What is decided, what is not</div>
+  <h2>Read this part first</h2>
+  <p>The 180 feedback said people go quiet when they cannot tell whether a decision is already made. So here it is, explicitly.</p>
+  <div class="mode">
+    <div class="m decided">
+      <div class="tag">Decided — not a vote</div>
+      <h4>We measure satisfaction on both channels.</h4>
+      <p>CSI becomes the graded metric, NPS stays as reference, effective Q3. That call is Cameron's — it is his KPI and a company critical number, and it is made.</p>
+    </div>
+    <div class="m open">
+      <div class="tag">Consult — genuinely open</div>
+      <h4>Whether it breaks in practice.</h4>
+      <p>Three questions at the bottom of this page, all things the room knows better than Cameron does. Vote and add a note; it comes back attributed.</p>
+    </div>
+  </div>
+</div>
+</section>
+
+<section>
+<div class="wrap">
+  <div class="sec-label">The objection, tested</div>
+  <h2>Why these two channels can be added together</h2>
+  <p>The serious objection to blending is that survey responses and online reviews are different populations answering different questions. We tested it against our own Q3 data. <b>They are not.</b></p>
+
+  <div class="bar-row"><div class="bl">GatherUp survey <span style="color:var(--grey-500)">(n=603)</span></div>
+    <div class="bar-track"><div class="seg p" style="width:91.5%">91.5% promoter</div><div class="seg x" style="width:3.6%"></div><div class="seg d" style="width:4.8%"></div></div></div>
+  <div class="bar-row"><div class="bl">Reviewers we never counted <span style="color:var(--grey-500)">(n=283)</span></div>
+    <div class="bar-track"><div class="seg p" style="width:95.8%">95.8% five-star</div><div class="seg x" style="width:1.4%"></div><div class="seg d" style="width:2.8%"></div></div></div>
+  <div class="legend"><b class="p"></b> Promoter <b class="x"></b> Passive <b class="d"></b> Detractor</div>
+
+  <p style="margin-top:16px">Four points apart on the promoter share. Same customers, same moment, same ask — we simply give them two places to put the answer.</p>
+
+  <div class="callout warm">
+    <h4>The "five-star scales have no middle" objection dies on our own data</h4>
+    <p>The textbook complaint about counting reviews is that a 0–10 scale has a real passive band and a 5-star scale does not. Ours does not either: <b>507 of our 603 survey responses this quarter are literally 10s.</b> Einstein customers give a 10 or they tell us something is wrong. A five-star and a 10 are behaving as the same signal.</p>
+  </div>
+
+  <h3>And it cannot be gamed the way you would expect</h3>
+  <ul>
+    <li>The GatherUp link goes out <b>automatically to every customer</b> and a branch cannot suppress it. The unhappy-customer channel is always open.</li>
+    <li>A branch can only <b>add</b> reviews, never subtract survey responses. Adding real five-star customers who would otherwise stay silent is the behavior we want.</li>
+    <li>The dual ask — <i>leave a review here, give management feedback here</i> — is part of the design system. A branch that skips it collects <b>less</b> CSI, not more. The incentive is self-correcting.</li>
+    <li>GatherUp exists so an unhappy customer can reach management <b>instead of</b> posting publicly. That is deliberate and it stays.</li>
+  </ul>
+</div>
+</section>
+
+<section>
+<div class="wrap">
+  <div class="sec-label">The numbers</div>
+  <h2>Q3 to date, every branch</h2>
+  <p><b>Mapping:</b> survey responses keep the standard bands (9–10 promoter, 7–8 passive, 0–6 detractor). Reviews map <b>5★ promoter · 4★ passive · ≤3★ detractor</b>. A customer who does both counts once, never twice.</p>
+
+  <div class="tblwrap">
+  <table>
+    <tr><th>Branch</th><th class="num">Survey n</th><th class="num">NPS</th><th class="num">New reviewers</th><th class="num">CSI n</th><th class="num">CSI</th><th class="num">Δ</th></tr>
+    <tr class="hl"><td>Fort Worth</td><td class="num">40</td><td class="num">77.5</td><td class="num">+16</td><td class="num">56</td><td class="num">80.4</td><td class="num up">+2.9</td></tr>
+    <tr><td>McKinney</td><td class="num">54</td><td class="num">79.6</td><td class="num">+18</td><td class="num">72</td><td class="num">80.6</td><td class="num up">+1.0</td></tr>
+    <tr><td>San Antonio</td><td class="num">62</td><td class="num">80.6</td><td class="num">+34</td><td class="num">96</td><td class="num">84.4</td><td class="num up">+3.8</td></tr>
+    <tr><td>N. Austin</td><td class="num">82</td><td class="num">85.4</td><td class="num">+27</td><td class="num">109</td><td class="num">85.3</td><td class="num down">−0.1</td></tr>
+    <tr><td>Dallas</td><td class="num">102</td><td class="num">87.3</td><td class="num">+46</td><td class="num">148</td><td class="num">87.2</td><td class="num down">−0.1</td></tr>
+    <tr><td>Houston</td><td class="num">86</td><td class="num">88.4</td><td class="num">+33</td><td class="num">119</td><td class="num">89.9</td><td class="num up">+1.5</td></tr>
+    <tr><td>Garland</td><td class="num">29</td><td class="num">89.7</td><td class="num">+24</td><td class="num">53</td><td class="num">94.3</td><td class="num up">+4.6</td></tr>
+    <tr><td>S. Austin</td><td class="num">66</td><td class="num">90.9</td><td class="num">+45</td><td class="num">111</td><td class="num">94.6</td><td class="num up">+3.7</td></tr>
+    <tr><td>Leander</td><td class="num">57</td><td class="num">94.7</td><td class="num">+6</td><td class="num">63</td><td class="num">95.2</td><td class="num up">+0.5</td></tr>
+    <tr><td>Tampa</td><td class="num">24</td><td class="num">95.8</td><td class="num">+34</td><td class="num">58</td><td class="num">98.3</td><td class="num up">+2.5</td></tr>
+    <tr class="total"><td>Company</td><td class="num">602</td><td class="num">86.7</td><td class="num">+283</td><td class="num">885</td><td class="num">88.7</td><td class="num">+2.0</td></tr>
+  </table>
+  </div>
+
+  <div class="grid2">
+    <div class="card"><h4>The denominator is the prize</h4><p style="font-size:.85rem">Not the score bump. Tampa goes from 24 responses to 58 — it more than doubles. Fort Worth from 40 to 56. Smaller branches stop being graded on a handful of people.</p></div>
+    <div class="card"><h4>CSI is not a curve</h4><p style="font-size:.85rem">N. Austin and Dallas go <b>down</b>. Fort Worth still finishes last. Four branch-quarters in the history below drop. This is a re-measurement, not inflation.</p></div>
+  </div>
+
+  <h3>What it would have done historically — reference only</h3>
+  <div class="callout">
+    <h4>We are not regrading anything</h4>
+    <p><b>Q1 (Feb–Apr), 5 of 10 change band:</b> S. Austin G→SG (89.5→94.0) · Leander G→SG (89.3→91.1) · Dallas G→SG (89.9→91.0) · N. Austin G→SG (90.2→91.9) · <b>San Antonio R→G (85.5→88.7)</b>. Fort Worth, Houston and Tampa each moved <i>down</i> while staying SG.</p>
+    <p><b>Q2 (May–Jul), 3 of 10 change band:</b> <b>S. Austin R→G, 79.7→88.5</b> — an 8.8-point swing on 137 new reviewers against 133 survey responses · <b>Garland R→G (84.5→88.3)</b> · Fort Worth G→SG (88.9→91.8).</p>
+    <p>S. Austin spent Q2 graded Red on roughly half its available signal. That is the clearest argument for making the change — and we are still not reopening the grade. <b>Past quarters stand as graded.</b></p>
+  </div>
+</div>
+</section>
+
+<section>
+<div class="wrap">
+  <div class="sec-label">Standing rules</div>
+  <h2>What is now true</h2>
+  <table class="rules">
+    <tr><td>Graded metric</td><td>CSI. NPS stays on the scorecard as a reference number.</td></tr>
+    <tr><td>Target</td><td><b>90+, unchanged.</b> CSI runs about 2 points above NPS on average but not uniformly. We are not lowering a bar — we are correcting a measurement Cameron had assumed was already in place.</td></tr>
+    <tr><td>Grading period</td><td>3 months, unchanged from 8/28. Mid-quarter reads stay coaching, not grades.</td></tr>
+    <tr><td>Retroactive</td><td>No. Prior quarters stand as graded.</td></tr>
+    <tr><td>Minimum responses</td><td><b>50</b> before a branch is stamped. Every branch-quarter cleared this in Q1 and Q2, so it binds nothing today — it exists for a newly opened branch in its first partial quarter. This likely retires the "rolling two-quarter option for small branches" that 8/28 left open.</td></tr>
+    <tr><td>Same customer, two scores</td><td><b>Latest wins.</b> A 4 on the survey followed by a five-star after a recovery counts as the five-star. A 10 followed by a one-star after a bad claim counts as the one-star. It reflects where the relationship actually ended up — which means <b>service recovery now shows up in the score for the first time.</b></td></tr>
+    <tr><td>Third-party filters</td><td>Accepted. Yelp filters "not recommended" reviews and we do not control it. That is the deal — we need to respond to how those filters affect the business. If they move the bars, we adjust our baselines, not the method.</td></tr>
+    <tr><td>Review timing</td><td>Reviews land later than surveys, so CSI represents a slightly rolling window. A margin effect, accepted.</td></tr>
+    <tr><td>Deletions / exclusions</td><td><b>None, ever.</b> Unchanged from 8/28. A one-star with no written feedback still counts.</td></tr>
+    <tr><td>Root-cause tags</td><td>Route fixes, never scores. Unchanged from 8/28.</td></tr>
+  </table>
+</div>
+</section>
+
+<section>
+<div class="wrap">
+  <div class="sec-label">Honest limits</div>
+  <h2>What this does not fix</h2>
+
+  <div class="limit"><h4>CSI measures satisfaction × surfacing effort</h4><p>Two branches with identical service and different review hustle will post different CSI. A branch can raise CSI by asking more people, not only by getting better. We consider asking part of the job — it drives SEO and it is already a Games metric — so the distortion points at behavior we want. <b>Guardrail: watch reviews-per-move alongside CSI. If CSI climbs and complaint volume does not fall, we surfaced signal rather than improved.</b></p></div>
+
+  <div class="limit"><h4>We moved the distortion, we did not remove it</h4><p>NPS rewarded survey-chasing. CSI rewards review-chasing. The second is the better behavior, but neither is pure satisfaction.</p></div>
+
+  <div class="limit"><h4>The band-width question from 8/28 is still open</h4><p>A 47% bigger denominator cuts the noise from roughly ±7 points to about ±6, against a Green band 3 points wide. Better, not solved. This still belongs at the Q3 QGR packet.</p></div>
+
+  <div class="limit"><h4>Every number on this page is a ceiling</h4><p>The analysis matched duplicate customers on name. Google display names are often a first name and an initial, or all lowercase, and will not match the full name in GatherUp, so we are almost certainly finding fewer duplicates than exist, which pushes CSI slightly high. The build spec fixes this; until it ships, read these figures as the optimistic end.</p></div>
+</div>
+</section>
+
+<section>
+<div class="wrap">
+  <div class="sec-label">Consult</div>
+  <h2>Three questions, and they are real</h2>
+  <p>Not whether we do this. The mechanics — where each of you knows more than Cameron does. Pick your name in the bar at the top, vote, add a note, then hit export at the bottom and send it back.</p>
+
+  <div class="prop" id="q1">
+    <div class="head"><span class="num">1</span><h4>Does the dual ask actually happen at every branch, on every move?</h4></div>
+    <div class="body"><p>The whole premise rests on this. If some branches only send the GatherUp link and never ask for the review, their CSI understates them — and the comparison across branches stops being fair. You know what actually happens in the field; Cameron does not.</p></div>
+  </div>
+
+  <div class="prop" id="q2">
+    <div class="head"><span class="num">2</span><h4>What breaks that we have not seen?</h4></div>
+    <div class="body"><p>Scorecard mechanics, Games interactions, anything in comp or bonus logic keyed to NPS, branch reporting that assumes the old number. Name it now rather than in December.</p></div>
+  </div>
+
+  <div class="prop" id="q3">
+    <div class="head"><span class="num">3</span><h4>Does "latest wins" create a perverse incentive in claims or recovery?</h4></div>
+    <div class="body"><p>This is the ruling most likely to change behavior. A customer's last word now counts, so a successful recovery can lift a score that a bad move lowered. That is intended. But it also means there is now a scoring reason to chase a re-review — and we should hear it from the claims side if that lands wrong.</p></div>
+  </div>
+
+  <div class="export">
+    <h4>Send your reactions back</h4>
+    <p>Everything you enter stays in your own browser until you export it. One click copies your votes and notes as text — paste it into Slack or a Monday update for Cameron.</p>
+    <button id="exportBtn">Copy my reactions</button>
+    <textarea id="exportOut" readonly></textarea>
+  </div>
+</div>
+</section>
+
+<section>
+<div class="wrap">
+  <div class="sec-label">Build spec · Matisen</div>
+  <h2>What it takes to ship</h2>
+
+  <div class="spec">
+    <h4>Where</h4>
+    <p>The hub, alongside the existing <code>nps_*</code> metrics. Today NPS comes from <code>tools/nps_pull.py</code> (GatherUp API v2) and review volume comes from the Games engine — two spines with no join. CSI needs the join.</p>
+    <p><b>Emit</b> <code>csi_monthly</code>, <code>csi_quarter</code>, <code>csi_trailing_90d</code>, <code>csi_week</code> at branch / region / company grain, matching the existing <code>nps_*</code> shape so dashboards and scorecards read it without special-casing. Every <code>nps_*</code> metric keeps emitting unchanged.</p>
+
+    <h4>Inputs — both already available</h4>
+    <ul>
+      <li><b>Survey responses</b> — NPS Report export, <code>/{businessId}/dashboard/customer-level-reporting/generate</code>. Uses first/last name, email, <code>NPS Rating (0-10)</code>, <code>Received</code>, <code>Job ID</code>, <code>Review Site Clicked</code>.</li>
+      <li><b>Reviews</b> — Reviews Report export, <code>/dashboard/report/success/review-data-csv?businessId=…</code>. Uses <code>name</code>, <code>rating</code>, <code>reviewDate</code>, <code>type</code> (google/yelp), <code>email</code>.</li>
+      <li>GatherUp exposes <b>API Credentials</b> under the account menu — prefer the API over scraping these endpoints.</li>
+    </ul>
+
+    <h4>Business ID → branch map (verified 9/17)</h4>
+    <pre>115151 N. Austin    115321 S. Austin    115363 Leander
+115364 Dallas       115365 McKinney     115366 Fort Worth
+115367 Houston      115368 San Antonio  115369 Tampa
+119784 Garland</pre>
+
+    <h4>Algorithm</h4>
+    <ol>
+      <li>Window survey responses by <code>Received</code>; window reviews by <code>reviewDate</code>.</li>
+      <li>Categorize — survey 9–10 promoter, 7–8 passive, 0–6 detractor; review 5★ promoter, 4★ passive, ≤3★ detractor.</li>
+      <li>Dedupe to one record per customer. On conflict, <b>latest wins</b>.</li>
+      <li><code>CSI = (promoters − detractors) / total × 100</code>, one decimal.</li>
+      <li>Suppress the graded stamp when total &lt; 50.</li>
+    </ol>
+  </div>
+
+  <div class="callout warm">
+    <h4>The dedupe is the real work — and the numbers on this page move if it tightens</h4>
+    <p>The analysis matched on normalized full name. Google display names will not match GatherUp's full names, so the current figures <b>under-count duplicates and therefore overstate CSI</b>. Required: match on email or Job ID first where present (exact, auto-accept), fall back to fuzzy name within a move-date window, and send everything below the confidence threshold to a <b>human review queue at end of quarter, before the branch is stamped</b> — <i>these are confirmed, these are fuzzy, someone eyeball them</i>. The quarter-end pass is the control; we are not trying to build a perfect algorithm.</p>
+  </div>
+
+  <p><b>Out of scope:</b> anything about how NPS itself is collected or calculated. NPS keeps emitting exactly as it does now.</p>
+</div>
+</section>
+
+<footer>
+<div class="wrap">
+  <h4>Lineage</h4>
+  <p><b>8/28/2026 — NPS Detractor Policy ruling</b> (Thread #40): no deletions · root-cause tags route fixes not scores · response rate is the volatility lever · 3 months stays the grading period · Brian's 2→10 stands, with a re-score invited after a logged recovery · 1-day survey gap unchanged. Amanda's DISCUSS vote confirmed as agreement 8/31. <a href="https://einsteinadmin.github.io/einstein-nps-brief-02523212656c/">Brief v2.0</a></p>
+  <p><b>This document</b> answers that ruling's open band-width-vs-noise question and supersedes nothing in it.</p>
+  <p>Analysis run 9/17/2026 against GatherUp's own NPS Report and Reviews Report exports, all ten locations, past-year window. Survey-only figures reproduce the hub's Q3 branch numbers exactly on six of ten branches and within 0.4 on the rest.</p>
+  <p style="margin-top:14px;color:var(--navy-400)">CSI-BRIEF v1.0 · 2026-09-17 · Internal — Einstein Moving Company leadership. Not indexed, not for distribution.</p>
+</div>
+</footer>
+
+<script>
+(function(){
+  var KEY = 'csi-brief-ballot-v1';
+  var REVIEWERS = ['Brian','Mike','Amanda','Matisen','Anne','Paul'];
+  var state;
+  try { state = JSON.parse(localStorage.getItem(KEY) || 'null') || {}; } catch(e){ state = {}; }
+  if (!state.reviewer) state.reviewer = '';
+  if (!state.votes) state.votes = {};
+
+  var flashTimer;
+  function flash(){
+    var el = document.getElementById('revStatus');
+    if (!el) return;
+    el.textContent = 'Saved';
+    clearTimeout(flashTimer);
+    flashTimer = setTimeout(function(){ el.textContent = ''; }, 1200);
+  }
+  function save(){ try { localStorage.setItem(KEY, JSON.stringify(state)); flash(); } catch(e){} }
+  function myVotes(){
+    if (!state.reviewer) return {};
+    if (!state.votes[state.reviewer]) state.votes[state.reviewer] = {};
+    return state.votes[state.reviewer];
+  }
+
+  var chipWrap = document.getElementById('revChips');
+  REVIEWERS.forEach(function(name){
+    var b = document.createElement('button');
+    b.className = 'rev-chip' + (state.reviewer === name ? ' on' : '');
+    b.textContent = name;
+    b.onclick = function(){
+      state.reviewer = name;
+      save();
+      document.querySelectorAll('.rev-chip').forEach(function(c){ c.classList.toggle('on', c.textContent === name); });
+      renderAll();
+    };
+    chipWrap.appendChild(b);
+  });
+
+  var props = Array.prototype.slice.call(document.querySelectorAll('.prop'));
+  var items = props.map(function(el, i){
+    var id = el.id || ('q' + (i + 1));
+    return { id: id, title: (el.querySelector('.head h4') || {}).textContent || id, el: el };
+  });
+
+  function buildBallot(item){
+    var body = item.el.querySelector('.body');
+    var div = document.createElement('div');
+    div.className = 'ballot';
+    div.innerHTML =
+      '<div class="btns">' +
+        '<button class="vote-btn agree" data-v="agree">No problem here</button>' +
+        '<button class="vote-btn disagree" data-v="disagree">This breaks</button>' +
+        '<button class="vote-btn discuss" data-v="discuss">Discuss live</button>' +
+      '</div>' +
+      '<textarea placeholder="What do you know that Cameron does not? Specifics beat opinions here."></textarea>';
+    body.appendChild(div);
+
+    div.querySelectorAll('.vote-btn').forEach(function(btn){
+      btn.onclick = function(){
+        if (!state.reviewer) { alert('Pick who you are in the bar at the top first, so your answer comes back attributed.'); return; }
+        var mv = myVotes();
+        var cur = mv[item.id] || {};
+        cur.v = (cur.v === btn.dataset.v) ? '' : btn.dataset.v;
+        mv[item.id] = cur;
+        save();
+        paint(item);
+      };
+    });
+    var ta = div.querySelector('textarea');
+    ta.addEventListener('input', function(){
+      if (!state.reviewer) return;
+      var mv = myVotes();
+      var cur = mv[item.id] || {};
+      cur.n = ta.value;
+      mv[item.id] = cur;
+      save();
+    });
+  }
+
+  function paint(item){
+    var div = item.el.querySelector('.ballot');
+    if (!div) return;
+    var mv = state.reviewer ? (state.votes[state.reviewer] || {}) : {};
+    var cur = mv[item.id] || {};
+    div.querySelectorAll('.vote-btn').forEach(function(btn){
+      btn.classList.toggle('on', btn.dataset.v === cur.v);
+    });
+    var ta = div.querySelector('textarea');
+    if (document.activeElement !== ta) ta.value = cur.n || '';
+  }
+
+  function renderAll(){ items.forEach(paint); }
+  items.forEach(buildBallot);
+  renderAll();
+
+  var exportBtn = document.getElementById('exportBtn');
+  exportBtn.onclick = function(){
+    if (!state.reviewer) { alert('Pick who you are in the bar at the top first.'); return; }
+    var mv = state.votes[state.reviewer] || {};
+    var lines = ['CSI BRIEF — reactions from ' + state.reviewer + ' (' + new Date().toLocaleDateString() + ')'];
+    items.forEach(function(item, i){
+      var cur = mv[item.id] || {};
+      if (!cur.v && !cur.n) return;
+      var v = cur.v ? cur.v.toUpperCase() : 'no vote';
+      lines.push('Q' + (i + 1) + ' · ' + item.title.slice(0, 70) + ' -> ' + v + (cur.n ? ' — "' + cur.n + '"' : ''));
+    });
+    if (lines.length === 1) lines.push('(no votes or notes recorded yet)');
+    var txt = lines.join('\n');
+    var out = document.getElementById('exportOut');
+    out.style.display = 'block';
+    out.value = txt;
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(txt).then(function(){
+        exportBtn.textContent = 'Copied — paste it to Cameron';
+      }).catch(function(){ out.select(); });
+    } else { out.select(); }
+  };
+})();
+</script>
+</body>
+</html>
